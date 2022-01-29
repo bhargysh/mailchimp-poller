@@ -1,36 +1,38 @@
-import Server from "./server/expressServer";
 import fetchContacts from "./mailchimp/fetchContact";
 import AppError from "./models/appError";
 import convertToOmetria from "./transformer/transformMailchimp";
-import { getState, setState } from './state';
+import { getState, setState } from "./state";
+import postToOmetria from "./ometria/postToApi";
+import "dotenv/config";
 
-const server = new Server();
-server.start();
+// Atm, the poll only fetches historical data the first time app starts and re-fetches every time
+// it restarts...could introduce env variable that sets it when app runs
 
 const poll = async () => {
-    try {
-        const response = await fetchContacts(getState());
-        const result = convertToOmetria(response.members);
+  try {
+    const response = await fetchContacts(getState());
+    const ometriaContacts = convertToOmetria(response.members);
+    console.log(`Fetched ${ometriaContacts.length} contacts`);
 
-        console.log('-----------------------');
-        console.log('Waiting for 10 seconds...');
+    await postToOmetria(ometriaContacts);
+    console.log("Finished Posting contacts data to Ometria API!", '\n', '\n');
 
-        setTimeout(() => {
-            setState(false);
-            console.log('-----------------------');
-            console.log('Re-invoking polling function!');
-            poll();
-        }, 10000);
-
-        //TODO: post to ometria API & error handling
-        console.log(result.length);
-    } catch (error: unknown) {
-        if(error instanceof AppError) {
-            throw error;
-        } else {
-            throw new Error('Unknown error occurred');
-        }
+    console.log("Polling for new data...");
+    const duration = Number(process.env.POLLING_DURATION) || 60000;
+    setTimeout(() => {
+      setState(false);
+      poll();
+    }, duration);
+  } catch (error: unknown) {
+    switch (error) {
+      case error instanceof AppError:
+        throw error;
+      case error instanceof Error:
+        throw error;
+      default:
+        throw new Error("Unknown error occurred");
     }
+  }
 };
 
 poll();
