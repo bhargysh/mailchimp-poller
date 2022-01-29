@@ -1,5 +1,7 @@
 export default class AppError extends Error {
-    constructor(message: string) {
-        super(message);
+    constructor(name: string, message: string, stack?: string) {
+        super(name);
+        this.message = message;
+        this.stack = stack;
     }
 }
