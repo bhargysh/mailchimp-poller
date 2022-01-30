@@ -1,16 +1,14 @@
 import axios, { AxiosResponse } from "axios";
 import "dotenv/config";
 import transformError from "../utils";
+import { Config } from '../models/config';
 
-//TODO: test this function!!
-
-const fetchContacts = async (fromStart: boolean) => {
+const fetchContacts = async (fromStart: boolean, config: Config) => {
   try {
     const memberListId = "1a2d7ebf82";
-    const key = process.env.MAILCHIMP_API_KEY || "";
-    const encodedKey = Buffer.from("anystring:" + key).toString("base64");
+    const encodedKey = Buffer.from("anystring:" + config.apiKey).toString("base64");
     const dateTime = new Date();
-    const interval = 1; // in minutes, should move this
+    const interval = config.pollDuration || 0
     const sinceTime = new Date(
       dateTime.setMinutes(dateTime.getMinutes() - interval)
     ).toISOString();
@@ -18,7 +16,7 @@ const fetchContacts = async (fromStart: boolean) => {
 
     if (fromStart) {
       url = `${
-        process.env.MAILCHIMP_SERVER
+        config.host
       }/lists/${memberListId}/members?before_last_changed=${dateTime.toISOString()}`;
     } else {
       url = `${process.env.MAILCHIMP_SERVER}/lists/${memberListId}/members?since_last_changed=${sinceTime}`;

@@ -8,9 +8,26 @@ import "dotenv/config";
 // Atm, the poll only fetches historical data the first time app starts and re-fetches every time
 // it restarts...could introduce env variable that sets it when app runs
 
+// Could also do batched transformations and post for higher volume data, also hardcoded for one member right now
+// TODO: Add README with reflection
+// TODO: add a config interface
+
+// TODO: Test fetchContacts & postToOmetria
+
+const mailchimpConfig = () => {
+  const key = process.env.MAILCHIMP_API_KEY || "";
+  const host = process.env.MAILCHIMP_SERVER || "";
+  const duration = process.env.POLL_DURATION || "10000";
+  return {
+    apiKey: key,
+    host: host,
+    pollDuration: parseInt(duration)
+  }
+}
+
 const poll = async () => {
   try {
-    const response = await fetchContacts(getState());
+    const response = await fetchContacts(getState(), mailchimpConfig());
     const ometriaContacts = convertToOmetria(response.members);
     console.log(`Fetched ${ometriaContacts.length} contacts`);
 
