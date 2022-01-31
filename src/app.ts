@@ -18,11 +18,11 @@ const poll = async () => {
     console.log("Finished Posting contacts data to Ometria API!", '\n', '\n');
 
     console.log("Polling for new data...");
-    const duration = Number(process.env.POLLING_DURATION) || 60000;
+    const duration = process.env.POLLING_DURATION || "60000";
     setTimeout(() => {
       setState(false);
       poll();
-    }, duration);
+    }, parseInt(duration));
   } catch (error: unknown) {
     switch (error) {
       case error instanceof AppError:
